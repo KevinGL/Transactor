@@ -34,3 +34,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+transactor-42fb8-firebase-adminsdk-akyo6-0c909839e6.json
