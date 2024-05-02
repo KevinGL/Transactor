@@ -76,6 +76,35 @@ export const getManualsCost = async () =>
     return cost;
 }
 
+export const getOutflows = async () =>
+{
+    let value = 0.0;
+    
+    const snapshot = await db.collection('Outflows').get()
+
+    const currentDate = new Date();
+
+    const currentMonth = currentDate.getMonth() + 1;
+    const currentYear = currentDate.getFullYear();
+    
+    snapshot.forEach(doc =>
+    {
+        const docDate = new Date(doc.data().date._seconds * 1000 + 10800000);
+
+        const docMonth = docDate.getMonth() + 1;
+        const docYear = docDate.getFullYear();
+        
+        if(currentMonth == docMonth && currentYear == docYear)
+        {
+            value += doc.data().cost;
+        }
+    });
+
+    console.log(value);
+
+    return value;
+}
+
 export const getIncome = async () =>
 {
     let income = 0.0;
