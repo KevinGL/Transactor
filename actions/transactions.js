@@ -69,6 +69,8 @@ export const getManualsCost = async () =>
         
         if(currentMonth == docMonth && currentYear == docYear)
         {
+            //console.log(doc.data().cost);
+            
             cost += doc.data().cost;
         }
     });
@@ -100,7 +102,7 @@ export const getOutflows = async () =>
         }
     });
 
-    console.log(value);
+    //console.log(value);
 
     return value;
 }
@@ -125,7 +127,7 @@ export const getIncome = async () =>
         
         if(currentMonth == docMonth && currentYear == docYear)
         {
-            income = doc.data().value;
+            income += doc.data().value;
         }
     });
 
@@ -187,9 +189,9 @@ export const getBenef = async () =>
 
     const dailySpencieMed = manuals / nbDays;
 
-    const fisrtNextMonth = new Date(currentYear, currentMonth, 0);
+    const firstNextMonth = new Date(currentYear, currentMonth, 0);
     
-    const nbDaysInMonth = fisrtNextMonth.getDate();
+    const nbDaysInMonth = firstNextMonth.getDate();
 
     const finalSpenciesEstimated = dailySpencieMed * nbDaysInMonth;
 
@@ -197,6 +199,43 @@ export const getBenef = async () =>
     const automatics = await getAutomaticsCost();
 
     return income - finalSpenciesEstimated - automatics;
+}
+
+export const getSpenciesEstimated = async () =>
+{
+    let manuals = 0.0;
+    
+    const snapshot = await db.collection('Manuals').get()
+
+    const currentDate = new Date();
+
+    const currentMonth = currentDate.getMonth() + 1;
+    const currentYear = currentDate.getFullYear();
+    
+    snapshot.forEach(doc =>
+    {
+        const docDate = new Date(doc.data().date._seconds * 1000 + 10800000);
+
+        const docMonth = docDate.getMonth() + 1;
+        const docYear = docDate.getFullYear();
+        
+        if(currentMonth == docMonth && currentYear == docYear)
+        {
+            manuals += doc.data().cost;
+        }
+    });
+
+    const nbDays = currentDate.getDate();
+
+    const dailySpencieMed = manuals / nbDays;
+
+    const firstNextMonth = new Date(currentYear, currentMonth, 0);
+    
+    const nbDaysInMonth = firstNextMonth.getDate();
+
+    const finalSpenciesEstimated = dailySpencieMed * nbDaysInMonth;
+
+    return finalSpenciesEstimated;
 }
 
 export const getManualsSpenciesPerDay = async () =>

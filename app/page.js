@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image";
-import { getAutomaticsCost, getManualsCost, getIncome, getBenef, getManualsSpenciesPerDay, getBalance, getOutflows } from "@/actions/transactions";
+import { getAutomaticsCost, getManualsCost, getIncome, getBenef, getManualsSpenciesPerDay, getBalance, getOutflows, getSpenciesEstimated } from "@/actions/transactions";
 import { useEffect, useState, useRef } from "react";
 import Chart from 'chart.js/auto';
 
@@ -12,6 +12,7 @@ export default function Home()
   let [income, setIncome] = useState(0.0);
   let [benef, setBenef] = useState(0.0);
   let [balance, setBalance] = useState(0.0);
+  let [spenciesEstimated, setSpenciesEstimated] = useState(0.0);
   let [spencies, setSpencies] = useState({});
 
   const chartRef = useRef(null);
@@ -38,6 +39,9 @@ export default function Home()
 
       value = await getBalance();
       setBalance(value);
+
+      value = await getSpenciesEstimated();
+      setSpenciesEstimated(value);
 
       await getOutflows();
     }
@@ -110,7 +114,7 @@ export default function Home()
       <h1>{ parseFloat(manCost).toFixed(2) } € de dépenses CB</h1>
       <h1>{ parseFloat(income - autoCost).toFixed(2) } € de dépenses max ce mois-ci</h1>
       <h1>{ parseFloat(Math.abs(benef)).toFixed(2) } € de { benef >= 0.0 && "bénéfice"} { benef < 0.0 && "perte" } estimé en fin de mois</h1>
-      {/*<h1>{ parseFloat(balance - autoCost - manCost).toFixed(2) } € estimés en fin de mois</h1>*/}
+      <h1>{ parseFloat(balance - autoCost - spenciesEstimated).toFixed(2) } € estimés en fin de mois</h1>
 
       <canvas ref={chartRef} />
     </>
