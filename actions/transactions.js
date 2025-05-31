@@ -2,305 +2,188 @@
 
 import { db } from "@/app/firebase/firebase-config";
 
-export const getAutomatics = () =>
+export const addMonthlyToDB = async (monthly) =>
 {
-    let automatics = [];
-    
-    db.collection('Automatics').get()
-    .then(snapshot =>
+    try
     {
-        snapshot.forEach(doc =>
-        {
-            automatics.push(doc.data());
-        });
-    })
-    .catch(err =>
+        const res = await db.collection("monthly").add(monthly);
+        console.log("Document ajouté avec ID :", res.id);
+        return { success: true, id: res.id };
+    }
+    catch (error)
     {
-        console.error('Error get automatics transactions:', err);
-    });
-
-    return automatics;
+        console.error("Erreur lors de l'ajout du document :", error);
+        return { success: false, error };
+    }
 }
 
-export const getAutomaticsCost = async () =>
+export const addMonthliesToDB = async (monthlies) =>
 {
-    let cost = 0.0;
-    
-    const snapshot = await db.collection('Automatics').get()
-
-    const currentDate = new Date();
-
-    const currentMonth = currentDate.getMonth() + 1;
-    const currentYear = currentDate.getFullYear();
-    
-    snapshot.forEach(doc =>
+    try
     {
-        const docDate = new Date(doc.data().date._seconds * 1000 + 10800000);
+        const res = await Promise.all(
+            monthlies.map((monthly) => db.collection("monthly").add(monthly))
+        );
 
-        const docMonth = docDate.getMonth() + 1;
-        const docYear = docDate.getFullYear();
+        const ids = res.map(doc => doc.id);
+        console.log("Documents ajoutés avec IDs :", ids);
 
-        if(currentMonth == docMonth && currentYear == docYear)
+        return { success: true, ids };
+    }
+    catch (error)
+    {
+        console.error("Erreur lors de l'ajout du document :", error);
+        return { success: false, error };
+    }
+}
+
+export const addDailyToDB = async (monthly) =>
+{
+    try
+    {
+        const res = await db.collection("daily").add(monthly);
+        console.log("Document ajouté avec ID :", res.id);
+        return { success: true, id: res.id };
+    }
+    catch (error)
+    {
+        console.error("Erreur lors de l'ajout du document :", error);
+        return { success: false, error };
+    }
+}
+
+export const addDailiesToDB = async (monthlies) =>
+{
+    try
+    {
+        const res = await Promise.all(
+            monthlies.map((monthly) => db.collection("daily").add(monthly))
+        );
+
+        const ids = res.map(doc => doc.id);
+        console.log("Documents ajoutés avec IDs :", ids);
+
+        return { success: true, ids };
+    }
+    catch (error)
+    {
+        console.error("Erreur lors de l'ajout du document :", error);
+        return { success: false, error };
+    }
+}
+
+export const addIncomeToDB = async (income) =>
+{
+    try
+    {
+        const res = await db.collection("incomes").add(income);
+        console.log("Document ajouté avec ID :", res.id);
+        return { success: true, id: res.id };
+    }
+    catch (error)
+    {
+        console.error("Erreur lors de l'ajout du document :", error);
+        return { success: false, error };
+    }
+}
+
+export const addIncomesToDB = async (monthlies) =>
+{
+    try
+    {
+        const res = await Promise.all(
+            monthlies.map((monthly) => db.collection("incomes").add(monthly))
+        );
+
+        const ids = res.map(doc => doc.id);
+        console.log("Documents ajoutés avec IDs :", ids);
+
+        return { success: true, ids };
+    }
+    catch (error)
+    {
+        console.error("Erreur lors de l'ajout du document :", error);
+        return { success: false, error };
+    }
+}
+
+export const getDailys = async () =>
+{
+    const currentDate = new Date(Date.now());
+
+    const docs = (await db.collection("daily").get()).docs;
+    const dailys = [];
+
+    docs.map((doc) =>
+    {
+        if(doc.data().month === currentDate.getMonth() + 1)
         {
-            cost += doc.data().cost;
+            dailys.push(doc.data());
         }
     });
-
-    return cost;
-}
-
-export const getManualsCost = async () =>
-{
-    let cost = 0.0;
     
-    const snapshot = await db.collection('Manuals').get()
+    //console.log(dailys);
 
-    const currentDate = new Date();
+    const resByDay = [];
+    const cumulByDay = [];
+    const nbDays = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate() + 1;
 
-    const currentMonth = currentDate.getMonth() + 1;
-    const currentYear = currentDate.getFullYear();
-    
-    snapshot.forEach(doc =>
+    let cumul = 0;
+
+    for(let day = 1 ; day <= nbDays ; day++)
     {
-        const docDate = new Date(doc.data().date._seconds * 1000 + 10800000);
+        let resThisDay = 0;
 
-        const docMonth = docDate.getMonth() + 1;
-        const docYear = docDate.getFullYear();
-        
-        if(currentMonth == docMonth && currentYear == docYear)
+        for(let j = 0 ; j < dailys.length ; j++)
         {
-            //console.log(doc.data().cost);
-            
-            cost += doc.data().cost;
-        }
-    });
-
-    return cost;
-}
-
-export const getOutflows = async () =>
-{
-    let value = 0.0;
-    
-    const snapshot = await db.collection('Outflows').get()
-
-    const currentDate = new Date();
-
-    const currentMonth = currentDate.getMonth() + 1;
-    const currentYear = currentDate.getFullYear();
-    
-    snapshot.forEach(doc =>
-    {
-        const docDate = new Date(doc.data().date._seconds * 1000 + 10800000);
-
-        const docMonth = docDate.getMonth() + 1;
-        const docYear = docDate.getFullYear();
-        
-        if(currentMonth == docMonth && currentYear == docYear)
-        {
-            value += doc.data().cost;
-        }
-    });
-
-    //console.log(value);
-
-    return value;
-}
-
-export const getIncome = async () =>
-{
-    let income = 0.0;
-    
-    const snapshot = await db.collection('Incomes').get()
-
-    const currentDate = new Date();
-
-    const currentMonth = currentDate.getMonth() + 1;
-    const currentYear = currentDate.getFullYear();
-    
-    snapshot.forEach(doc =>
-    {
-        const docDate = new Date(doc.data().date._seconds * 1000 + 10800000);
-
-        const docMonth = docDate.getMonth() + 1;
-        const docYear = docDate.getFullYear();
-        
-        if(currentMonth == docMonth && currentYear == docYear)
-        {
-            income += doc.data().value;
-        }
-    });
-
-    return income;
-}
-
-export const getBalance = async () =>
-{
-    let balance = 0.0;
-    
-    const snapshot = await db.collection('Balances').get()
-
-    const currentDate = new Date();
-
-    const currentMonth = currentDate.getMonth() + 1;
-    const currentYear = currentDate.getFullYear();
-    
-    snapshot.forEach(doc =>
-    {
-        const docDate = new Date(doc.data().date._seconds * 1000 + 10800000);
-
-        const docMonth = docDate.getMonth() + 1;
-        const docYear = docDate.getFullYear();
-        
-        if(currentMonth == docMonth && currentYear == docYear)
-        {
-            balance = doc.data().value;
-        }
-    });
-
-    return balance;
-}
-
-export const getBenef = async () =>
-{
-    let manuals = 0.0;
-    
-    const snapshot = await db.collection('Manuals').get()
-
-    const currentDate = new Date();
-
-    const currentMonth = currentDate.getMonth() + 1;
-    const currentYear = currentDate.getFullYear();
-    
-    snapshot.forEach(doc =>
-    {
-        const docDate = new Date(doc.data().date._seconds * 1000 + 10800000);
-
-        const docMonth = docDate.getMonth() + 1;
-        const docYear = docDate.getFullYear();
-        
-        if(currentMonth == docMonth && currentYear == docYear)
-        {
-            manuals += doc.data().cost;
-        }
-    });
-
-    const nbDays = currentDate.getDate();
-
-    const dailySpencieMed = manuals / nbDays;
-
-    const firstNextMonth = new Date(currentYear, currentMonth, 0);
-    
-    const nbDaysInMonth = firstNextMonth.getDate();
-
-    const finalSpenciesEstimated = dailySpencieMed * nbDaysInMonth;
-
-    const income = await getIncome();
-    const automatics = await getAutomaticsCost();
-
-    return income - finalSpenciesEstimated - automatics;
-}
-
-export const getSpenciesEstimated = async () =>
-{
-    let manuals = 0.0;
-    
-    const snapshot = await db.collection('Manuals').get()
-
-    const currentDate = new Date();
-
-    const currentMonth = currentDate.getMonth() + 1;
-    const currentYear = currentDate.getFullYear();
-    
-    snapshot.forEach(doc =>
-    {
-        const docDate = new Date(doc.data().date._seconds * 1000 + 10800000);
-
-        const docMonth = docDate.getMonth() + 1;
-        const docYear = docDate.getFullYear();
-        
-        if(currentMonth == docMonth && currentYear == docYear)
-        {
-            manuals += doc.data().cost;
-        }
-    });
-
-    const nbDays = currentDate.getDate();
-
-    const dailySpencieMed = manuals / nbDays;
-
-    const firstNextMonth = new Date(currentYear, currentMonth, 0);
-    
-    const nbDaysInMonth = firstNextMonth.getDate();
-
-    const finalSpenciesEstimated = dailySpencieMed * nbDaysInMonth;
-
-    return finalSpenciesEstimated;
-}
-
-export const getManualsSpenciesPerDay = async () =>
-{
-    let spencies = { dates: [], cumul: [], values: [], medDaily: [] };
-    
-    const snapshot = await db.collection('Manuals').orderBy("date", "asc").get()
-
-    const currentDate = new Date();
-
-    const currentDay = currentDate.getDate();
-    const currentMonth = currentDate.getMonth() + 1;
-    const currentYear = currentDate.getFullYear();
-
-    let spenciesCumul = 0.0;
-    let spenciesThisDay = 0.0;
-
-    for(let day = 1 ; day <= currentDay ; day++)
-    {
-        snapshot.forEach(doc =>
-        {
-            const docDate = new Date(doc.data().date._seconds * 1000 + 10800000);
-
-            const docDay = docDate.getDate();
-            const docMonth = docDate.getMonth() + 1;
-            const docYear = docDate.getFullYear();
-            
-            if(currentMonth == docMonth && currentYear == docYear && docDay == day)
+            if(dailys[j].day === day)
             {
-                spenciesCumul += doc.data().cost;
-                spenciesThisDay += doc.data().cost;
+                resThisDay += dailys[j].cost;
+                cumul += dailys[j].cost;
             }
-        });
-
-        spencies.dates.push(day);
-        spencies.cumul.push(spenciesCumul);
-        spencies.values.push(spenciesThisDay);
-
-        spenciesThisDay = 0.0;
-    }
-
-    const fisrtNextMonth = new Date(currentYear, currentMonth, 0);
-    const nbDaysInMonth = fisrtNextMonth.getDate();
-    const medDaily = spenciesCumul / currentDay;
-    let cumulMed = medDaily;
-
-    for(let day = 1 ; day <= currentDay ; day++)
-    {
-        spencies.medDaily.push(cumulMed);
-
-        cumulMed += medDaily;
-    }
-
-    if(currentDay < nbDaysInMonth)
-    {
-        for(let day = currentDay + 1 ; day <= nbDaysInMonth ; day++)
-        {
-            spencies.dates.push(day);
-            spencies.medDaily.push(cumulMed);
-
-            cumulMed += medDaily;
         }
+
+        //console.log(resThisDay);
+
+        resByDay.push(resThisDay);
+        cumulByDay.push(cumul);
     }
 
-    //console.log(spencies.medDaily);
+    return {resByDay, cumulByDay};
+}
 
-    return spencies;
+export const getMonthliesSpencies = async () =>
+{
+    const currentDate = new Date(Date.now());
+
+    const docs = (await db.collection("monthly").get()).docs;
+    let res = 0;
+
+    docs.map((doc) =>
+    {
+        if(doc.data().month === currentDate.getMonth() + 1)
+        {
+            res += doc.data().cost;
+        }
+    });
+
+    return res;
+}
+
+export const getMonthliesIncomes = async () =>
+{
+    const currentDate = new Date(Date.now());
+
+    const docs = (await db.collection("incomes").get()).docs;
+    let res = 0;
+
+    docs.map((doc) =>
+    {
+        if(doc.data().month === currentDate.getMonth() + 1)
+        {
+            res += doc.data().cost;
+        }
+    });
+
+    return res;
 }

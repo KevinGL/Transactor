@@ -1,122 +1,89 @@
 "use client"
 
 import Image from "next/image";
-import { getAutomaticsCost, getManualsCost, getIncome, getBenef, getManualsSpenciesPerDay, getBalance, getOutflows, getSpenciesEstimated } from "@/actions/transactions";
+import { getDailys, getMonthliesSpencies, getMonthliesIncomes } from "@/actions/transactions";
 import { useEffect, useState, useRef } from "react";
 import Chart from 'chart.js/auto';
 
 export default function Home()
 {
-  let [autoCost, setAutoCost] = useState(0.0);
-  let [manCost, setManCost] = useState(0.0);
-  let [income, setIncome] = useState(0.0);
-  let [benef, setBenef] = useState(0.0);
-  let [balance, setBalance] = useState(0.0);
-  let [spenciesEstimated, setSpenciesEstimated] = useState(0.0);
-  let [spencies, setSpencies] = useState({});
-
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
   
   useEffect(() =>
   {
-    const fetch = async () =>
+    const getDatas = async () =>
     {
-      let value = await getAutomaticsCost();
-      setAutoCost(value);
+      const spencies = await getMonthliesSpencies();
+      const incomes = await getMonthliesIncomes();
+      const dailys = await getDailys();
 
-      value = await getManualsCost();
-      setManCost(value);
+      const currentDate = new Date();
+      const nbDays = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+      const dates = Array.from({ length: nbDays }, (_, i) => i + 1);
+      const maxSpencies = Array.from({ length: nbDays }, (_, i) => incomes - spencies);
 
-      value = await getIncome();
-      setIncome(value);
-
-      value = await getBenef();
-      setBenef(value);
-
-      value = await getManualsSpenciesPerDay();
-      setSpencies(value);
-
-      value = await getBalance();
-      setBalance(value);
-
-      value = await getSpenciesEstimated();
-      setSpenciesEstimated(value);
-
-      await getOutflows();
-    }
-
-    fetch();
-  }, []);
-
-  useEffect(() =>
-  {
-    if (chartInstance.current)
-    {
-      chartInstance.current.destroy();
-    }
-
-    if (chartRef.current && income !== 0)
-    {
-      const ctx = chartRef.current.getContext('2d');
-      chartInstance.current = new Chart(ctx,
+      // ✅ Détruire l'ancien graphique AVANT de recréer
+      if (chartInstance.current)
       {
-        type: 'line',
-        data:
-        {
-          labels: spencies.dates,
-          datasets:
-          [
-            {
-              label: 'Cumul dépenses',
-              data: spencies.cumul,
-              backgroundColor: 'rgba(75, 192, 192, 0.2)',
-              borderColor: 'rgba(75, 192, 192, 1)',
-              borderWidth: 1
-            },
+        chartInstance.current.destroy();
+        chartInstance.current = null;
+      }
 
+      const canvas = chartRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      chartInstance.current = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [
             {
               label: 'Dépenses quotidiennes',
-              data: spencies.values,
+              data: dailys.resByDay,
               backgroundColor: 'rgba(255, 0, 0, 0.2)',
               borderColor: 'rgba(255, 0, 0, 1)',
               borderWidth: 1
             },
 
             {
-              label: 'Dépenses moyennes journalières',
-              data: spencies.medDaily,
-              backgroundColor: 'rgba(0, 255, 0, 0.2)',
-              borderColor: 'rgba(0, 255, 0, 1)',
+              label: 'Cumul dépenses quotidiennes',
+              data: dailys.cumulByDay,
+              backgroundColor: 'rgba(4, 63, 26, 0.2)',
+              borderColor: 'rgb(0, 255, 21)',
               borderWidth: 1
             },
+
+            {
+              label: 'Plafond dépenses',
+              data: maxSpencies,
+              backgroundColor: 'rgba(4, 63, 26, 0.2)',
+              borderColor: 'rgb(38, 0, 255)',
+              borderWidth: 1
+            }
           ]
         },
-        options:
-        {
-          scales:
-          {
-            y:
-            {
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
               beginAtZero: true,
-              max: income - autoCost
+              suggestedMax: Math.max(100, incomes - spencies) // fallback si <= 0
             }
           }
         }
       });
-    }
-  }, [autoCost, manCost, income, spencies]);
-  
-  return (
-    <>
-      <h1>Revenu mensuel de { parseFloat(income).toFixed(2) } €</h1>
-      <h1>{ parseFloat(autoCost).toFixed(2) } € de dépenses fixes</h1>
-      <h1>{ parseFloat(manCost).toFixed(2) } € de dépenses CB</h1>
-      <h1>{ parseFloat(income - autoCost).toFixed(2) } € de dépenses max ce mois-ci</h1>
-      <h1>{ parseFloat(Math.abs(benef)).toFixed(2) } € de { benef >= 0.0 && "bénéfice"} { benef < 0.0 && "perte" } estimé en fin de mois</h1>
-      <h1>{ parseFloat(balance - autoCost - spenciesEstimated).toFixed(2) } € estimés en fin de mois</h1>
+    };
 
+    getDatas();
+  }, []);
+
+  return (
+    <div className="container mx-auto p-4 h-screen flex flex-col">
+      <h1 className="text-3xl font-bold text-gray-600 mb-4">Graphe mensuel</h1>
       <canvas ref={chartRef} />
-    </>
-  );
+    </div>
+  )
 }
