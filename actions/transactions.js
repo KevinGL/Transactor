@@ -116,7 +116,7 @@ export const getDailys = async () =>
 
     docs.map((doc) =>
     {
-        if(doc.data().month === currentDate.getMonth() + 1)
+        if(doc.data().month === currentDate.getMonth() + 1 && doc.data().year === currentDate.getFullYear())
         {
             dailys.push(doc.data());
         }
@@ -161,7 +161,7 @@ export const getMonthliesSpencies = async () =>
 
     docs.map((doc) =>
     {
-        if(doc.data().month === currentDate.getMonth() + 1)
+        if(doc.data().month === currentDate.getMonth() + 1 && doc.data().year === currentDate.getFullYear())
         {
             res += doc.data().cost;
         }
@@ -179,7 +179,82 @@ export const getMonthliesIncomes = async () =>
 
     docs.map((doc) =>
     {
-        if(doc.data().month === currentDate.getMonth() + 1)
+        if(doc.data().month === currentDate.getMonth() + 1 && doc.data().year === currentDate.getFullYear())
+        {
+            res += doc.data().cost;
+        }
+    });
+
+    return res;
+}
+
+export const getDailysByMonth = async (month, year) =>
+{
+    const docs = (await db.collection("daily").get()).docs;
+    const dailys = [];
+
+    docs.map((doc) =>
+    {
+        if(doc.data().month === month &&  doc.data().year === year)
+        {
+            dailys.push(doc.data());
+        }
+    });
+    
+    //console.log(dailys);
+
+    const resByDay = [];
+    const cumulByDay = [];
+    const nbDays = new Date(year, month - 1, 0).getDate() + 1;
+
+    let cumul = 0;
+
+    for(let day = 1 ; day <= nbDays ; day++)
+    {
+        let resThisDay = 0;
+
+        for(let j = 0 ; j < dailys.length ; j++)
+        {
+            if(dailys[j].day === day)
+            {
+                resThisDay += dailys[j].cost;
+                cumul += dailys[j].cost;
+            }
+        }
+
+        //console.log(resThisDay);
+
+        resByDay.push(resThisDay);
+        cumulByDay.push(cumul);
+    }
+
+    return {resByDay, cumulByDay};
+}
+
+export const getMonthliesSpenciesByMonth = async (month, year) =>
+{
+    const docs = (await db.collection("monthly").get()).docs;
+    let res = 0;
+
+    docs.map((doc) =>
+    {
+        if(doc.data().month === month && doc.data().year === year)
+        {
+            res += doc.data().cost;
+        }
+    });
+
+    return res;
+}
+
+export const getMonthliesIncomesByMonth = async (month, year) =>
+{
+    const docs = (await db.collection("incomes").get()).docs;
+    let res = 0;
+
+    docs.map((doc) =>
+    {
+        if(doc.data().month === month &&  doc.data().year === year)
         {
             res += doc.data().cost;
         }
