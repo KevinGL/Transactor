@@ -104,7 +104,7 @@ export default function addIncome()
     return (
         <>
             <div className="container mx-auto p-4 h-screen flex flex-col">
-                <h1 className="text-3xl font-bold text-gray-600 mb-4">Ajouter des dépenses mensuelles</h1>
+                <h1 className="text-3xl font-bold text-gray-600 mb-4">Ajouter des revenus</h1>
                 <div className="container mx-auto p-4 flex flex-wrap gap-4">
                     {
                         incomes.map((income, index) =>
