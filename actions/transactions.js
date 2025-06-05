@@ -145,10 +145,9 @@ export const getDailys = async () =>
 
         //console.log(resThisDay);
 
-        resByDay.push(resThisDay);
-        
         if(day <= currentDate.getDate())
         {
+            resByDay.push(resThisDay);
             cumulByDay.push(cumul);
         }
     }
